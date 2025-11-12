@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, CheckCircle } from "lucide-react";
 import { Vocabulary } from "@/data/vocabulary";
+import { AudioButton } from "@/components/AudioButton";
 
 interface VocabularyCardProps {
   vocab: Vocabulary;
@@ -19,6 +20,7 @@ export const VocabularyCard = ({ vocab, onEdit, onDelete, onToggleMastered }: Vo
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <h3 className="text-3xl font-bold text-foreground">{vocab.hanzi}</h3>
+              <AudioButton text={vocab.pinyin} variant="ghost" size="sm" />
               {vocab.mastered && (
                 <CheckCircle className="h-5 w-5 text-success" />
               )}
