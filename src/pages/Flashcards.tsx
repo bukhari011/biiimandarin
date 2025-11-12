@@ -4,8 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { vocabularyData, Vocabulary } from "@/data/vocabulary";
+import { vocabularyData, Vocabulary, Difficulty } from "@/data/vocabulary";
 import { toast } from "sonner";
+import { AudioButton } from "@/components/AudioButton";
+import { DifficultySelector } from "@/components/DifficultySelector";
+import { calculateNextReview } from "@/utils/spacedRepetition";
 
 const FlashcardsPage = () => {
   const navigate = useNavigate();
@@ -15,17 +18,52 @@ const FlashcardsPage = () => {
   const [masteredCards, setMasteredCards] = useState<Set<string>>(
     new Set(vocabularyData.filter((v) => v.mastered).map((v) => v.id))
   );
+  const [showDifficulty, setShowDifficulty] = useState(false);
 
   const currentCard = cards[currentIndex];
 
   const handleNext = () => {
     setIsFlipped(false);
+    setShowDifficulty(false);
     setCurrentIndex((prev) => (prev + 1) % cards.length);
   };
 
   const handlePrevious = () => {
     setIsFlipped(false);
+    setShowDifficulty(false);
     setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length);
+  };
+
+  const handleDifficultySelect = (difficulty: Difficulty) => {
+    const currentCard = cards[currentIndex];
+    const { nextReviewDate, newEaseFactor } = calculateNextReview(
+      difficulty,
+      currentCard.easeFactor || 2.5,
+      currentCard.reviewCount || 0
+    );
+
+    // Update card with spaced repetition data
+    const updatedCards = cards.map((card) =>
+      card.id === currentCard.id
+        ? {
+            ...card,
+            difficulty,
+            lastReviewed: new Date(),
+            nextReview: nextReviewDate,
+            reviewCount: (card.reviewCount || 0) + 1,
+            easeFactor: newEaseFactor,
+          }
+        : card
+    );
+
+    setCards(updatedCards);
+    
+    const daysUntilReview = Math.ceil(
+      (nextReviewDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+    );
+    
+    toast.success(`Review berikutnya: ${daysUntilReview} hari lagi`);
+    handleNext();
   };
 
   const handleShuffle = () => {
@@ -33,6 +71,7 @@ const FlashcardsPage = () => {
     setCards(shuffled);
     setCurrentIndex(0);
     setIsFlipped(false);
+    setShowDifficulty(false);
     toast.success("Kartu diacak!");
   };
 
@@ -93,7 +132,11 @@ const FlashcardsPage = () => {
           {/* Card */}
           <div 
             className="perspective-1000"
-            onClick={() => setIsFlipped(!isFlipped)}
+            onClick={() => {
+              if (!showDifficulty) {
+                setIsFlipped(!isFlipped);
+              }
+            }}
           >
             <Card 
               className={`relative h-96 cursor-pointer shadow-strong transition-all duration-500 transform hover:scale-105 ${
@@ -116,7 +159,10 @@ const FlashcardsPage = () => {
                         {currentCard.category}
                       </Badge>
                     </div>
-                    <h2 className="text-7xl font-bold text-foreground mb-4">{currentCard.hanzi}</h2>
+                    <div className="flex items-center justify-center gap-4">
+                      <h2 className="text-7xl font-bold text-foreground">{currentCard.hanzi}</h2>
+                      <AudioButton text={currentCard.pinyin} size="lg" />
+                    </div>
                     <p className="text-muted-foreground text-sm">Klik untuk melihat jawaban</p>
                   </div>
                 ) : (
@@ -126,7 +172,10 @@ const FlashcardsPage = () => {
                     style={{ transform: "rotateY(180deg)" }}
                   >
                     <h2 className="text-5xl font-bold text-foreground mb-2">{currentCard.hanzi}</h2>
-                    <p className="text-3xl text-primary font-semibold mb-4">{currentCard.pinyin}</p>
+                    <div className="flex items-center justify-center gap-3">
+                      <p className="text-3xl text-primary font-semibold">{currentCard.pinyin}</p>
+                      <AudioButton text={currentCard.pinyin} size="lg" />
+                    </div>
                     <p className="text-2xl text-foreground">{currentCard.meaning}</p>
                   </div>
                 )}
@@ -134,27 +183,43 @@ const FlashcardsPage = () => {
             </Card>
           </div>
 
-          {/* Controls */}
-          <div className="flex justify-between items-center">
-            <Button variant="outline" size="lg" onClick={handlePrevious}>
-              <ChevronLeft className="mr-2 h-5 w-5" />
-              Sebelumnya
-            </Button>
-
+          {/* Difficulty Selector (shown after flipping) */}
+          {isFlipped && !showDifficulty && (
             <Button
-              variant={masteredCards.has(currentCard.id) ? "secondary" : "default"}
+              variant="default"
               size="lg"
-              onClick={handleToggleMastered}
+              onClick={() => setShowDifficulty(true)}
+              className="w-full max-w-md mx-auto animate-fade-in"
             >
-              <CheckCircle className="mr-2 h-5 w-5" />
-              {masteredCards.has(currentCard.id) ? "Sudah Hafal" : "Tandai Hafal"}
+              Tandai Tingkat Kesulitan
             </Button>
+          )}
 
-            <Button variant="outline" size="lg" onClick={handleNext}>
-              Selanjutnya
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
-          </div>
+          {showDifficulty && <DifficultySelector onSelect={handleDifficultySelect} />}
+
+          {/* Controls */}
+          {!showDifficulty && (
+            <div className="flex justify-between items-center">
+              <Button variant="outline" size="lg" onClick={handlePrevious}>
+                <ChevronLeft className="mr-2 h-5 w-5" />
+                Sebelumnya
+              </Button>
+
+              <Button
+                variant={masteredCards.has(currentCard.id) ? "secondary" : "default"}
+                size="lg"
+                onClick={handleToggleMastered}
+              >
+                <CheckCircle className="mr-2 h-5 w-5" />
+                {masteredCards.has(currentCard.id) ? "Sudah Hafal" : "Tandai Hafal"}
+              </Button>
+
+              <Button variant="outline" size="lg" onClick={handleNext}>
+                Selanjutnya
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="text-center text-sm text-muted-foreground">

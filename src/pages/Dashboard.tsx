@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { ProgressBar } from "@/components/ProgressBar";
-import { BookOpen, BookMarked, Brain, Trophy, Plus } from "lucide-react";
+import { BookOpen, BookMarked, Brain, Trophy, Plus, BarChart3 } from "lucide-react";
 import { vocabularyData, hskLevels } from "@/data/vocabulary";
 
 const Dashboard = () => {
@@ -68,7 +68,7 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
           <Button
             variant="outline"
             size="lg"
@@ -100,6 +100,17 @@ const Dashboard = () => {
             <BookOpen className="h-8 w-8 text-accent" />
             <span className="font-semibold">Daftar Kata</span>
             <span className="text-xs text-muted-foreground">Lihat semua kosakata</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-32 flex flex-col gap-2 hover:bg-success/5 hover:border-success transition-smooth"
+            onClick={() => navigate("/statistics")}
+          >
+            <BarChart3 className="h-8 w-8 text-success" />
+            <span className="font-semibold">Statistik</span>
+            <span className="text-xs text-muted-foreground">Lihat progress detail</span>
           </Button>
         </div>
       </main>

@@ -1,3 +1,5 @@
+export type Difficulty = "easy" | "medium" | "hard" | "again";
+
 export interface Vocabulary {
   id: string;
   hanzi: string;
@@ -6,6 +8,11 @@ export interface Vocabulary {
   hskLevel: number;
   category: string;
   mastered: boolean;
+  difficulty?: Difficulty;
+  lastReviewed?: Date;
+  nextReview?: Date;
+  reviewCount?: number;
+  easeFactor?: number; // For spaced repetition algorithm
 }
 
 export const vocabularyData: Vocabulary[] = [
