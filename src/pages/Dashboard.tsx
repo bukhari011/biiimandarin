@@ -1,23 +1,59 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { ProgressBar } from "@/components/ProgressBar";
-import { BookOpen, BookMarked, Brain, Trophy, Plus, BarChart3 } from "lucide-react";
-import { vocabularyData, hskLevels } from "@/data/vocabulary";
+import { BookOpen, BookMarked, Brain, Trophy, Plus, BarChart3, Award, Pencil, FileDown, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useVocabulary } from "@/hooks/useVocabulary";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { vocabulary, loading } = useVocabulary();
+  const [streak, setStreak] = useState(0);
 
-  const totalWords = vocabularyData.length;
-  const masteredWords = vocabularyData.filter((v) => v.mastered).length;
+  useEffect(() => {
+    fetchStreak();
+  }, []);
+
+  const fetchStreak = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("user_streaks")
+      .select("current_streak")
+      .eq("user_id", user.id)
+      .single();
+
+    if (data) setStreak(data.current_streak);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Berhasil logout!");
+    navigate("/auth");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const totalWords = vocabulary.length;
+  const masteredWords = vocabulary.filter((v) => v.progress?.mastered).length;
   const inProgressWords = totalWords - masteredWords;
 
-  // Calculate mastered per HSK level
-  const hskProgress = hskLevels.map((level) => {
-    const levelWords = vocabularyData.filter((v) => v.hskLevel === level.level);
-    const masteredInLevel = levelWords.filter((v) => v.mastered).length;
+  const hskProgress = [1, 2, 3, 4, 5, 6].map((level) => {
+    const levelWords = vocabulary.filter((v) => v.hsk_level === level);
+    const masteredInLevel = levelWords.filter((v) => v.progress?.mastered).length;
     return {
-      ...level,
+      level,
+      name: `HSK ${level}`,
       current: masteredInLevel,
       totalInData: levelWords.length,
     };
@@ -25,33 +61,39 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card shadow-soft">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-1">Mandarin Tracker</h1>
-              <p className="text-muted-foreground">Pantau progres belajar Mandarin Anda</p>
+              <p className="text-muted-foreground">🔥 Streak: {streak} hari</p>
             </div>
-            <Button onClick={() => navigate("/vocabulary")} size="lg" className="shadow-medium">
-              <Plus className="mr-2 h-5 w-5" />
-              Tambah Kata Baru
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate("/vocabulary")} size="lg" className="shadow-medium">
+                <Plus className="mr-2 h-5 w-5" />
+                Tambah Kata
+              </Button>
+              <Button onClick={handleLogout} variant="outline" size="lg">
+                <LogOut className="mr-2 h-5 w-5" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
           <StatsCard title="Total Kosakata" value={totalWords} icon={BookOpen} variant="primary" />
           <StatsCard title="Sudah Hafal" value={masteredWords} icon={Trophy} variant="secondary" />
           <StatsCard title="Sedang Dipelajari" value={inProgressWords} icon={Brain} variant="accent" />
-          <StatsCard title="Tingkat Kemajuan" value={`${Math.round((masteredWords / totalWords) * 100)}%`} icon={BookMarked} />
+          <StatsCard
+            title="Tingkat Kemajuan"
+            value={totalWords > 0 ? `${Math.round((masteredWords / totalWords) * 100)}%` : "0%"}
+            icon={BookMarked}
+          />
         </div>
 
-        {/* HSK Progress Section */}
         <div className="bg-card rounded-lg border p-6 shadow-soft animate-fade-in">
           <h2 className="text-xl font-semibold text-foreground mb-6">Progress HSK Level</h2>
           <div className="space-y-4">
@@ -67,7 +109,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
           <Button
             variant="outline"
@@ -77,7 +118,6 @@ const Dashboard = () => {
           >
             <BookMarked className="h-8 w-8 text-primary" />
             <span className="font-semibold">Flashcard</span>
-            <span className="text-xs text-muted-foreground">Latihan dengan kartu</span>
           </Button>
 
           <Button
@@ -88,18 +128,16 @@ const Dashboard = () => {
           >
             <Brain className="h-8 w-8 text-secondary" />
             <span className="font-semibold">Quiz</span>
-            <span className="text-xs text-muted-foreground">Uji pemahaman Anda</span>
           </Button>
 
           <Button
             variant="outline"
             size="lg"
             className="h-32 flex flex-col gap-2 hover:bg-accent/5 hover:border-accent transition-smooth"
-            onClick={() => navigate("/vocabulary")}
+            onClick={() => navigate("/hanzi-practice")}
           >
-            <BookOpen className="h-8 w-8 text-accent" />
-            <span className="font-semibold">Daftar Kata</span>
-            <span className="text-xs text-muted-foreground">Lihat semua kosakata</span>
+            <Pencil className="h-8 w-8 text-accent" />
+            <span className="font-semibold">Tulis Hanzi</span>
           </Button>
 
           <Button
@@ -110,7 +148,28 @@ const Dashboard = () => {
           >
             <BarChart3 className="h-8 w-8 text-success" />
             <span className="font-semibold">Statistik</span>
-            <span className="text-xs text-muted-foreground">Lihat progress detail</span>
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-24 flex items-center gap-3"
+            onClick={() => navigate("/achievements")}
+          >
+            <Award className="h-8 w-8 text-primary" />
+            <span className="font-semibold text-lg">Lihat Achievements</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-24 flex items-center gap-3"
+            onClick={() => navigate("/vocabulary")}
+          >
+            <FileDown className="h-8 w-8 text-secondary" />
+            <span className="font-semibold text-lg">Export / Import Data</span>
           </Button>
         </div>
       </main>

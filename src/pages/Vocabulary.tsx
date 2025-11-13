@@ -1,53 +1,82 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VocabularyCard } from "@/components/VocabularyCard";
 import { AddWordDialog } from "@/components/AddWordDialog";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { vocabularyData as initialData, categories, Vocabulary } from "@/data/vocabulary";
-import { toast } from "sonner";
+import { useVocabulary, VocabularyWithProgress } from "@/hooks/useVocabulary";
+import { useProgress } from "@/hooks/useProgress";
+import { useExportImport } from "@/hooks/useExportImport";
+import { categories } from "@/data/vocabulary";
 
 const VocabularyPage = () => {
   const navigate = useNavigate();
-  const [vocabList, setVocabList] = useState<Vocabulary[]>(initialData);
+  const { vocabulary, loading, addVocabulary, updateVocabulary, deleteVocabulary } = useVocabulary();
+  const { toggleMastered } = useProgress();
+  const { exportToJSON, exportToCSV, importFromJSON, importFromCSV } = useExportImport();
   const [filterHSK, setFilterHSK] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("Semua");
-  const [editingVocab, setEditingVocab] = useState<Vocabulary | null>(null);
+  const [editingVocab, setEditingVocab] = useState<VocabularyWithProgress | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const filteredVocab = vocabList.filter((vocab) => {
-    const hskMatch = filterHSK === "all" || vocab.hskLevel.toString() === filterHSK;
+  const filteredVocab = vocabulary.filter((vocab) => {
+    const hskMatch = filterHSK === "all" || vocab.hsk_level.toString() === filterHSK;
     const categoryMatch = filterCategory === "Semua" || vocab.category === filterCategory;
     return hskMatch && categoryMatch;
   });
 
-  const handleAdd = (newVocab: Omit<Vocabulary, "id">) => {
+  const handleAdd = async (newVocab: any) => {
     if (editingVocab) {
-      setVocabList(vocabList.map((v) => (v.id === editingVocab.id ? { ...newVocab, id: editingVocab.id } : v)));
+      await updateVocabulary(editingVocab.id, newVocab);
       setEditingVocab(null);
     } else {
-      const newId = (Math.max(...vocabList.map((v) => parseInt(v.id))) + 1).toString();
-      setVocabList([...vocabList, { ...newVocab, id: newId }]);
+      await addVocabulary(newVocab);
     }
   };
 
-  const handleDelete = (id: string) => {
-    setVocabList(vocabList.filter((v) => v.id !== id));
-    toast.success("Kata berhasil dihapus!");
+  const handleEdit = (vocab: any) => {
+    const fullVocab = vocabulary.find((v) => v.id === vocab.id);
+    if (fullVocab) setEditingVocab(fullVocab);
   };
 
-  const handleToggleMastered = (id: string) => {
-    setVocabList(
-      vocabList.map((v) => (v.id === id ? { ...v, mastered: !v.mastered } : v))
-    );
+  const handleToggleMastered = async (id: string) => {
+    const vocab = vocabulary.find((v) => v.id === id);
+    if (vocab) {
+      await toggleMastered(id, !(vocab.progress?.mastered || false));
+    }
   };
+
+  const handleImport = (type: "json" | "csv") => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = type === "json" ? ".json" : ".csv";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        if (type === "json") {
+          await importFromJSON(file);
+        } else {
+          await importFromCSV(file);
+        }
+      }
+    };
+    input.click();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card shadow-soft sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <Button variant="outline" size="icon" onClick={() => navigate("/")}>
                 <ArrowLeft className="h-4 w-4" />
@@ -57,12 +86,41 @@ const VocabularyPage = () => {
                 <p className="text-sm text-muted-foreground">{filteredVocab.length} kata ditemukan</p>
               </div>
             </div>
-            <AddWordDialog onAdd={handleAdd} editVocab={editingVocab} onClose={() => setEditingVocab(null)} />
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={() => exportToJSON(vocabulary)}>
+                <Download className="mr-2 h-4 w-4" />
+                JSON
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => exportToCSV(vocabulary)}>
+                <Download className="mr-2 h-4 w-4" />
+                CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleImport("json")}>
+                <Upload className="mr-2 h-4 w-4" />
+                Import JSON
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleImport("csv")}>
+                <Upload className="mr-2 h-4 w-4" />
+                Import CSV
+              </Button>
+              <AddWordDialog 
+                onAdd={handleAdd} 
+                editVocab={editingVocab ? {
+                  id: editingVocab.id,
+                  hanzi: editingVocab.hanzi,
+                  pinyin: editingVocab.pinyin,
+                  meaning: editingVocab.meaning,
+                  hskLevel: editingVocab.hsk_level,
+                  category: editingVocab.category,
+                  mastered: editingVocab.progress?.mastered || false,
+                } : null} 
+                onClose={() => setEditingVocab(null)} 
+              />
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Filters */}
       <div className="border-b bg-card/50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-wrap gap-4">
@@ -102,15 +160,22 @@ const VocabularyPage = () => {
         </div>
       </div>
 
-      {/* Vocabulary Grid */}
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredVocab.map((vocab) => (
             <VocabularyCard
               key={vocab.id}
-              vocab={vocab}
-              onEdit={setEditingVocab}
-              onDelete={handleDelete}
+              vocab={{
+                id: vocab.id,
+                hanzi: vocab.hanzi,
+                pinyin: vocab.pinyin,
+                meaning: vocab.meaning,
+                hskLevel: vocab.hsk_level,
+                category: vocab.category,
+                mastered: vocab.progress?.mastered || false,
+              }}
+              onEdit={handleEdit}
+              onDelete={deleteVocabulary}
               onToggleMastered={handleToggleMastered}
             />
           ))}
@@ -118,7 +183,7 @@ const VocabularyPage = () => {
 
         {filteredVocab.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">Tidak ada kata yang ditemukan dengan filter ini.</p>
+            <p className="text-muted-foreground text-lg">Tidak ada kata. Tambahkan kata pertama Anda!</p>
           </div>
         )}
       </main>

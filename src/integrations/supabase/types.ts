@@ -14,7 +14,205 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          condition_type: string
+          condition_value: number
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          condition_type: string
+          condition_value: number
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          name: string
+        }
+        Update: {
+          condition_type?: string
+          condition_value?: number
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_progress: {
+        Row: {
+          created_at: string
+          difficulty: string | null
+          ease_factor: number | null
+          id: string
+          last_reviewed: string | null
+          mastered: boolean | null
+          next_review: string | null
+          review_count: number | null
+          updated_at: string
+          user_id: string
+          vocabulary_id: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: string | null
+          ease_factor?: number | null
+          id?: string
+          last_reviewed?: string | null
+          mastered?: boolean | null
+          next_review?: string | null
+          review_count?: number | null
+          updated_at?: string
+          user_id: string
+          vocabulary_id: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: string | null
+          ease_factor?: number | null
+          id?: string
+          last_reviewed?: string | null
+          mastered?: boolean | null
+          next_review?: string | null
+          review_count?: number | null
+          updated_at?: string
+          user_id?: string
+          vocabulary_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_vocabulary_id_fkey"
+            columns: ["vocabulary_id"]
+            isOneToOne: false
+            referencedRelation: "vocabulary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number | null
+          id: string
+          last_activity_date: string | null
+          longest_streak: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vocabulary: {
+        Row: {
+          category: string
+          created_at: string
+          hanzi: string
+          hsk_level: number
+          id: string
+          image_url: string | null
+          meaning: string
+          pinyin: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          hanzi: string
+          hsk_level: number
+          id?: string
+          image_url?: string | null
+          meaning: string
+          pinyin: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          hanzi?: string
+          hsk_level?: number
+          id?: string
+          image_url?: string | null
+          meaning?: string
+          pinyin?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -3,18 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { vocabularyData, Vocabulary } from "@/data/vocabulary";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { useVocabulary } from "@/hooks/useVocabulary";
+import { useProgress } from "@/hooks/useProgress";
+import { supabase } from "@/integrations/supabase/client";
 
 interface QuizQuestion {
-  question: Vocabulary;
+  vocabularyId: string;
+  hanzi: string;
+  pinyin: string;
   options: string[];
   correctAnswer: string;
 }
 
 const QuizPage = () => {
   const navigate = useNavigate();
+  const { vocabulary, loading } = useVocabulary();
+  const { updateProgress, checkAchievements } = useProgress();
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -23,13 +29,15 @@ const QuizPage = () => {
   const [answered, setAnswered] = useState(false);
 
   useEffect(() => {
-    generateQuestions();
-  }, []);
+    if (vocabulary.length >= 4) {
+      generateQuestions();
+    }
+  }, [vocabulary]);
 
   const generateQuestions = () => {
-    const shuffled = [...vocabularyData].sort(() => Math.random() - 0.5);
-    const quizQuestions = shuffled.slice(0, 10).map((vocab) => {
-      const wrongOptions = vocabularyData
+    const shuffled = [...vocabulary].sort(() => Math.random() - 0.5);
+    const quizQuestions = shuffled.slice(0, Math.min(10, shuffled.length)).map((vocab) => {
+      const wrongOptions = vocabulary
         .filter((v) => v.id !== vocab.id)
         .sort(() => Math.random() - 0.5)
         .slice(0, 3)
@@ -38,7 +46,9 @@ const QuizPage = () => {
       const options = [...wrongOptions, vocab.meaning].sort(() => Math.random() - 0.5);
 
       return {
-        question: vocab,
+        vocabularyId: vocab.id,
+        hanzi: vocab.hanzi,
+        pinyin: vocab.pinyin,
         options,
         correctAnswer: vocab.meaning,
       };
@@ -47,7 +57,7 @@ const QuizPage = () => {
     setQuestions(quizQuestions);
   };
 
-  const handleAnswer = (answer: string) => {
+  const handleAnswer = async (answer: string) => {
     if (answered) return;
 
     setSelectedAnswer(answer);
@@ -55,8 +65,10 @@ const QuizPage = () => {
 
     if (answer === questions[currentQuestionIndex].correctAnswer) {
       setScore(score + 1);
+      await updateProgress(questions[currentQuestionIndex].vocabularyId, "easy");
       toast.success("Benar! 🎉");
     } else {
+      await updateProgress(questions[currentQuestionIndex].vocabularyId, "again");
       toast.error("Salah! Coba lagi di lain waktu.");
     }
   };
@@ -67,8 +79,37 @@ const QuizPage = () => {
       setSelectedAnswer(null);
       setAnswered(false);
     } else {
-      setShowResult(true);
+      finishQuiz();
     }
+  };
+
+  const finishQuiz = async () => {
+    setShowResult(true);
+    
+    if (score === questions.length) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: achievement } = await supabase
+          .from("achievements")
+          .select("id")
+          .eq("condition_type", "perfect_quiz")
+          .single();
+
+        if (achievement) {
+          const { error } = await supabase
+            .from("user_achievements")
+            .insert({ user_id: user.id, achievement_id: achievement.id })
+            .select()
+            .single();
+
+          if (!error) {
+            toast.success("🎉 Achievement unlocked: Perfeksionis!");
+          }
+        }
+      }
+    }
+
+    await checkAchievements();
   };
 
   const handleRestart = () => {
@@ -80,6 +121,25 @@ const QuizPage = () => {
     generateQuestions();
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (vocabulary.length < 4) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl text-muted-foreground mb-4">Tambahkan minimal 4 kata untuk mulai quiz</p>
+          <Button onClick={() => navigate("/vocabulary")}>Tambah Kata</Button>
+        </div>
+      </div>
+    );
+  }
+
   if (questions.length === 0) {
     return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
   }
@@ -89,7 +149,6 @@ const QuizPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card shadow-soft">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -123,8 +182,8 @@ const QuizPage = () => {
               <Card className="shadow-strong">
                 <CardHeader>
                   <CardTitle className="text-center">
-                    <div className="text-5xl font-bold text-foreground mb-4">{currentQuestion.question.hanzi}</div>
-                    <div className="text-xl text-muted-foreground">{currentQuestion.question.pinyin}</div>
+                    <div className="text-5xl font-bold text-foreground mb-4">{currentQuestion.hanzi}</div>
+                    <div className="text-xl text-muted-foreground">{currentQuestion.pinyin}</div>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -192,7 +251,7 @@ const QuizPage = () => {
                     Coba Lagi
                   </Button>
                   <Button onClick={() => navigate("/")} variant="outline" className="flex-1" size="lg">
-                    Kembali ke Dashboard
+                    Dashboard
                   </Button>
                 </div>
               </CardContent>

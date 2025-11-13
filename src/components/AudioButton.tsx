@@ -31,9 +31,29 @@ export const AudioButton = ({
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
-    utterance.rate = 0.8; // Slower for better pronunciation
-    utterance.pitch = 1;
+    utterance.rate = 0.7; // Slower for better Mandarin pronunciation
+    utterance.pitch = 1.1; // Slightly higher pitch for Mandarin tones
     utterance.volume = 1;
+
+    // Wait for voices to load and select Chinese voice
+    const setVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const chineseVoice = voices.find(
+        (voice) =>
+          voice.lang.includes("zh") ||
+          voice.lang.includes("cmn") ||
+          voice.name.includes("Chinese")
+      );
+      if (chineseVoice) {
+        utterance.voice = chineseVoice;
+      }
+    };
+
+    if (window.speechSynthesis.getVoices().length > 0) {
+      setVoice();
+    } else {
+      window.speechSynthesis.onvoiceschanged = setVoice;
+    }
 
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
