@@ -31,6 +31,7 @@ const Quiz = () => {
   const [answeredCorrectly, setAnsweredCorrectly] = useState<boolean | null>(null);
   const [score, setScore] = useState(0);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
 
   const filteredVocabulary = useMemo(() => {
     let filtered = vocabulary;
@@ -40,11 +41,19 @@ const Quiz = () => {
       filtered = filtered.filter((v) => hskLevels.includes(v.hsk_level));
     }
 
-    return filtered.sort(() => Math.random() - 0.5).slice(0, 10);
-  }, [vocabulary, selectedHSK, quizStarted]);
+    return filtered;
+  }, [vocabulary, selectedHSK]);
 
-  const questions: QuizQuestion[] = useMemo(() => {
-    return filteredVocabulary.map((vocab) => {
+  const currentQuestion = questions[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+
+  const startQuiz = () => {
+    // Generate shuffled questions once at quiz start
+    const shuffled = [...filteredVocabulary]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 10);
+
+    const generatedQuestions = shuffled.map((vocab) => {
       const wrongAnswers = vocabulary
         .filter((v) => v.id !== vocab.id && v.hsk_level === vocab.hsk_level)
         .sort(() => Math.random() - 0.5)
@@ -61,12 +70,8 @@ const Quiz = () => {
         options,
       };
     });
-  }, [filteredVocabulary, vocabulary]);
 
-  const currentQuestion = questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-
-  const startQuiz = () => {
+    setQuestions(generatedQuestions);
     setQuizStarted(true);
     setCurrentQuestionIndex(0);
     setScore(0);
