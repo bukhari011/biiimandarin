@@ -127,6 +127,69 @@ export const useExportImport = () => {
     }
   };
 
+  const previewJSON = async (file: File) => {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid JSON format");
+      }
+
+      return data.map((item: any) => {
+        const hskLevel = item.hsk_level || item.hskLevel || "1";
+        const hskString = String(hskLevel).replace(/[^0-9]/g, '');
+        const parsedHskLevel = parseInt(hskString, 10);
+        const finalHskLevel = (!isNaN(parsedHskLevel) && parsedHskLevel >= 1 && parsedHskLevel <= 6) 
+          ? parsedHskLevel 
+          : 1;
+
+        return {
+          hanzi: item.hanzi || "",
+          pinyin: item.pinyin || "",
+          meaning: item.meaning || "",
+          hsk_level: finalHskLevel,
+          category: item.category || "Umum",
+          isValid: !!(item.hanzi && item.pinyin && item.meaning),
+        };
+      });
+    } catch (error: any) {
+      toast.error("Gagal membaca file: " + error.message);
+      return [];
+    }
+  };
+
+  const previewCSV = async (file: File) => {
+    try {
+      const text = await file.text();
+      const lines = text.split("\n").slice(1); // Skip header
+
+      return lines
+        .filter((line) => line.trim())
+        .map((line) => {
+          const [hanzi, pinyin, meaning, hskLevel, category] = line.split(",").map(s => s.trim());
+          
+          const hskString = String(hskLevel || "1").replace(/[^0-9]/g, '');
+          const parsedHskLevel = parseInt(hskString, 10);
+          const finalHskLevel = (!isNaN(parsedHskLevel) && parsedHskLevel >= 1 && parsedHskLevel <= 6) 
+            ? parsedHskLevel 
+            : 1;
+
+          return {
+            hanzi: hanzi || "",
+            pinyin: pinyin || "",
+            meaning: meaning || "",
+            hsk_level: finalHskLevel,
+            category: category || "Umum",
+            isValid: !!(hanzi && pinyin && meaning),
+          };
+        });
+    } catch (error: any) {
+      toast.error("Gagal membaca file: " + error.message);
+      return [];
+    }
+  };
+
   const downloadTemplate = (hskLevel: number) => {
     const headers = ["Hanzi", "Pinyin", "Meaning", "HSK Level", "Category"];
     const exampleRows = [
@@ -150,6 +213,8 @@ export const useExportImport = () => {
     exportToCSV,
     importFromJSON,
     importFromCSV,
+    previewJSON,
+    previewCSV,
     downloadTemplate,
   };
 };

@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VocabularyCard } from "@/components/VocabularyCard";
 import { AddWordDialog } from "@/components/AddWordDialog";
+import { ImportPreviewDialog } from "@/components/ImportPreviewDialog";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useVocabulary, VocabularyWithProgress } from "@/hooks/useVocabulary";
@@ -14,12 +15,14 @@ const VocabularyPage = () => {
   const navigate = useNavigate();
   const { vocabulary, loading, addVocabulary, updateVocabulary, deleteVocabulary } = useVocabulary();
   const { toggleMastered } = useProgress();
-  const { exportToJSON, exportToCSV, importFromJSON, importFromCSV, downloadTemplate } = useExportImport();
+  const { exportToJSON, exportToCSV, importFromJSON, importFromCSV, previewJSON, previewCSV, downloadTemplate } = useExportImport();
   const [filterHSK, setFilterHSK] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("Semua");
   const [filterMastered, setFilterMastered] = useState<string>("all");
   const [editingVocab, setEditingVocab] = useState<VocabularyWithProgress | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewData, setPreviewData] = useState<any[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [pendingImport, setPendingImport] = useState<{ type: "json" | "csv"; file: File } | null>(null);
 
   const filteredVocab = vocabulary.filter((vocab) => {
     const hskMatch = filterHSK === "all" || vocab.hsk_level.toString() === filterHSK;
@@ -52,21 +55,38 @@ const VocabularyPage = () => {
     }
   };
 
-  const handleImport = (type: "json" | "csv") => {
+  const handleImport = async (type: "json" | "csv") => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = type === "json" ? ".json" : ".csv";
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        if (type === "json") {
-          await importFromJSON(file);
-        } else {
-          await importFromCSV(file);
-        }
+        setPendingImport({ type, file });
+        const data = type === "json" ? await previewJSON(file) : await previewCSV(file);
+        setPreviewData(data);
+        setPreviewOpen(true);
       }
     };
     input.click();
+  };
+
+  const confirmImport = async () => {
+    if (!pendingImport) return;
+    setPreviewOpen(false);
+    if (pendingImport.type === "json") {
+      await importFromJSON(pendingImport.file);
+    } else {
+      await importFromCSV(pendingImport.file);
+    }
+    setPendingImport(null);
+    setPreviewData([]);
+  };
+
+  const cancelImport = () => {
+    setPreviewOpen(false);
+    setPendingImport(null);
+    setPreviewData([]);
   };
 
   if (loading) {
@@ -218,6 +238,14 @@ const VocabularyPage = () => {
           </div>
         )}
       </main>
+
+      <ImportPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        data={previewData}
+        onConfirm={confirmImport}
+        onCancel={cancelImport}
+      />
     </div>
   );
 };

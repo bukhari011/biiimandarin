@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { ProgressBar } from "@/components/ProgressBar";
-import { BookOpen, BookMarked, Brain, Trophy, Plus, BarChart3, Award, Pencil, FileDown, LogOut } from "lucide-react";
+import { NotificationSettings } from "@/components/NotificationSettings";
+import { BookOpen, BookMarked, Brain, Trophy, Plus, BarChart3, Award, Pencil, FileDown, LogOut, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVocabulary } from "@/hooks/useVocabulary";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { toast } from "sonner";
 
 const Dashboard = () => {
@@ -68,7 +70,12 @@ const Dashboard = () => {
               <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Mandarin Tracker</h1>
               <p className="text-sm md:text-base text-muted-foreground">🔥 Streak: {streak} hari</p>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex gap-2 w-full sm:w-auto flex-wrap">
+              <ThemeToggle />
+              <Button onClick={() => navigate("/leaderboard")} variant="outline" size="sm">
+                <Users className="mr-2 h-4 w-4" />
+                Leaderboard
+              </Button>
               <Button onClick={() => navigate("/vocabulary")} size="sm" className="shadow-medium flex-1 sm:flex-initial">
                 <Plus className="mr-1 md:mr-2 h-4 md:h-5 w-4 md:w-5" />
                 <span className="text-xs md:text-sm">Tambah</span>
@@ -180,6 +187,8 @@ const Dashboard = () => {
             <span className="font-semibold text-lg">Export / Import Data</span>
           </Button>
         </div>
+
+        <NotificationSettings />
       </main>
     </div>
   );
