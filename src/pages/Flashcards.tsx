@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Shuffle, CheckCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Shuffle, CheckCircle, Home } from "lucide-react";
 import { useVocabulary } from "@/hooks/useVocabulary";
 import { useProgress } from "@/hooks/useProgress";
 import { AudioButton } from "@/components/AudioButton";
@@ -14,10 +14,12 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { DifficultySelector } from "@/components/DifficultySelector";
 import { Difficulty } from "@/data/vocabulary";
+import { useNavigate } from "react-router-dom";
 
 const Flashcards = () => {
   const { vocabulary, loading, updateVocabulary } = useVocabulary();
   const { updateProgress } = useProgress();
+  const navigate = useNavigate();
   
   const [selectedHSK, setSelectedHSK] = useState<string>("all");
   const [showPinyin, setShowPinyin] = useState(true);
@@ -128,7 +130,13 @@ const Flashcards = () => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground">Flashcards</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground">Flashcards</h1>
+          <Button onClick={() => navigate("/")} variant="outline" size="sm">
+            <Home className="h-4 w-4 mr-2" />
+            Beranda
+          </Button>
+        </div>
 
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-card p-4 rounded-lg shadow-soft">
