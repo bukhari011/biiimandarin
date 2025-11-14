@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useVocabulary } from "@/hooks/useVocabulary";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Button } from "@/components/ui/button";
+import { Home } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const COLORS = {
   primary: "hsl(var(--primary))",
@@ -14,6 +17,7 @@ const COLORS = {
 
 const Statistics = () => {
   const { vocabulary, loading } = useVocabulary();
+  const navigate = useNavigate();
 
   // HSK Level Distribution
   const hskDistribution = useMemo(() => {
@@ -85,7 +89,12 @@ const Statistics = () => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground">Statistik</h1>
+        <div className="flex items-center gap-4">
+          <Button onClick={() => navigate("/")} variant="ghost" size="sm">
+            <Home className="h-4 w-4" />
+          </Button>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground">Statistik</h1>
+        </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
