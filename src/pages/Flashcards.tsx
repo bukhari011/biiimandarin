@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Shuffle, CheckCircle, Home } from "lucide-react";
+import { ArrowLeft, ArrowRight, Shuffle, CheckCircle, Home, Star } from "lucide-react";
 import { useVocabulary } from "@/hooks/useVocabulary";
 import { useProgress } from "@/hooks/useProgress";
 import { AudioButton } from "@/components/AudioButton";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { DifficultySelector } from "@/components/DifficultySelector";
 import { Difficulty } from "@/data/vocabulary";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 const Flashcards = () => {
   const { vocabulary, loading, updateVocabulary } = useVocabulary();
@@ -82,6 +83,13 @@ const Flashcards = () => {
     handleNext();
   };
 
+  const handleMarkMastered = async () => {
+    if (!currentCard) return;
+    await updateProgress(currentCard.id, "easy");
+    toast.success("Ditandai sudah hafal! 🎉");
+    handleNext();
+  };
+
   const handleEdit = () => {
     if (!currentCard) return;
     setEditedWord({
@@ -130,12 +138,11 @@ const Flashcards = () => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">Flashcards</h1>
-          <Button onClick={() => navigate("/")} variant="outline" size="sm">
-            <Home className="h-4 w-4 mr-2" />
-            Beranda
+        <div className="flex items-center gap-4">
+          <Button onClick={() => navigate("/")} variant="ghost" size="sm">
+            <Home className="h-4 w-4" />
           </Button>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground">Flashcards</h1>
         </div>
 
         {/* Controls */}
@@ -182,17 +189,20 @@ const Flashcards = () => {
 
         {/* Flashcard */}
         <Card 
-          className="shadow-medium hover:shadow-strong transition-smooth cursor-pointer"
+          className="shadow-medium hover:shadow-strong transition-smooth cursor-pointer relative"
           onClick={() => setIsFlipped(!isFlipped)}
         >
+          {currentCard.progress?.mastered && (
+            <Badge className="absolute top-4 right-4 bg-success text-success-foreground">
+              <Star className="h-3 w-3 mr-1" />
+              Sudah Hafal
+            </Badge>
+          )}
           <CardContent className="pt-12 pb-12 min-h-[400px] flex flex-col items-center justify-center">
             {!isFlipped ? (
               <div className="text-center space-y-6 animate-scale-in">
                 <div className="flex items-center justify-center gap-4">
                   <h2 className="text-5xl md:text-7xl font-bold text-foreground">{currentCard.hanzi}</h2>
-                  {currentCard.progress?.mastered && (
-                    <CheckCircle className="h-8 w-8 text-success" />
-                  )}
                 </div>
                 {showPinyin && (
                   <div className="flex items-center justify-center gap-3">
@@ -217,6 +227,18 @@ const Flashcards = () => {
 
         {/* Actions */}
         <div className="flex flex-col gap-4">
+          {/* Quick action button */}
+          {!currentCard.progress?.mastered && (
+            <Button 
+              onClick={handleMarkMastered}
+              className="w-full bg-success hover:bg-success/90 text-success-foreground"
+              size="lg"
+            >
+              <Star className="h-5 w-5 mr-2" />
+              Tandai Sudah Hafal
+            </Button>
+          )}
+          
           <DifficultySelector onSelect={handleDifficultySelect} />
           
           <div className="flex gap-2 justify-between">

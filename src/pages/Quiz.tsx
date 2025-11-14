@@ -8,8 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { AudioButton } from "@/components/AudioButton";
 import { useVocabulary } from "@/hooks/useVocabulary";
 import { useProgress } from "@/hooks/useProgress";
-import { CheckCircle, XCircle, ArrowRight } from "lucide-react";
+import { CheckCircle, XCircle, ArrowRight, Home } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface QuizQuestion {
   id: string;
@@ -22,6 +23,7 @@ interface QuizQuestion {
 const Quiz = () => {
   const { vocabulary, loading } = useVocabulary();
   const { updateProgress } = useProgress();
+  const navigate = useNavigate();
 
   const [selectedHSK, setSelectedHSK] = useState<string>("all");
   const [showPinyin, setShowPinyin] = useState(true);
@@ -125,7 +127,13 @@ const Quiz = () => {
     return (
       <div className="min-h-screen bg-background p-4 md:p-8">
         <div className="max-w-4xl mx-auto space-y-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">Quiz</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">Quiz</h1>
+            <Button onClick={() => navigate("/")} variant="outline" size="sm">
+              <Home className="h-4 w-4 mr-2" />
+              Beranda
+            </Button>
+          </div>
 
           <Card className="shadow-medium">
             <CardContent className="pt-6 space-y-6">
@@ -194,7 +202,12 @@ const Quiz = () => {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Quiz</h1>
+          <div className="flex items-center gap-4">
+            <Button onClick={() => navigate("/")} variant="ghost" size="sm">
+              <Home className="h-4 w-4" />
+            </Button>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Quiz</h1>
+          </div>
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Skor</p>
             <p className="text-2xl font-bold text-primary">{score}/{questions.length}</p>
