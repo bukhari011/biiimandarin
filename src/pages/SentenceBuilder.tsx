@@ -13,6 +13,7 @@ interface ValidationResult {
   correctSentence: string;
   feedback: string;
   errors: string[];
+  pointsEarned?: number;
 }
 
 const SentenceBuilder = () => {
@@ -196,6 +197,14 @@ const SentenceBuilder = () => {
                 <div>
                   <p className="text-sm font-medium mb-2">Kalimat yang Benar:</p>
                   <p className="text-2xl font-medium text-success">{validationResult.correctSentence}</p>
+                </div>
+              )}
+              
+              {validationResult.pointsEarned && (
+                <div className="p-4 bg-success/10 border border-success rounded-lg">
+                  <p className="text-success font-semibold text-center">
+                    🎉 +{validationResult.pointsEarned} Poin!
+                  </p>
                 </div>
               )}
               

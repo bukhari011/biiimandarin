@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { ProgressBar } from "@/components/ProgressBar";
 import { NotificationSettings } from "@/components/NotificationSettings";
-import { BookOpen, BookMarked, Brain, Trophy, Plus, BarChart3, Award, Pencil, FileDown, LogOut, Users } from "lucide-react";
+import { BookOpen, BookMarked, Brain, Trophy, Plus, BarChart3, Award, Pencil, FileDown, LogOut, Users, CheckCircle, Type } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVocabulary } from "@/hooks/useVocabulary";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -14,9 +14,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { vocabulary, loading } = useVocabulary();
   const [streak, setStreak] = useState(0);
+  const [points, setPoints] = useState(0);
 
   useEffect(() => {
     fetchStreak();
+    fetchPoints();
   }, []);
 
   const fetchStreak = async () => {
@@ -30,6 +32,19 @@ const Dashboard = () => {
       .single();
 
     if (data) setStreak(data.current_streak);
+  };
+
+  const fetchPoints = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("user_points")
+      .select("total_points")
+      .eq("user_id", user.id)
+      .single();
+
+    if (data) setPoints(data.total_points);
   };
 
   const handleLogout = async () => {
@@ -68,7 +83,10 @@ const Dashboard = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Mandarin Tracker</h1>
-              <p className="text-sm md:text-base text-muted-foreground">🔥 Streak: {streak} hari</p>
+              <div className="flex gap-4 flex-wrap">
+                <p className="text-sm md:text-base text-muted-foreground">🔥 Streak: {streak} hari</p>
+                <p className="text-sm md:text-base text-muted-foreground">⭐ Poin: {points}</p>
+              </div>
             </div>
             <div className="flex gap-2 w-full sm:w-auto flex-wrap">
               <ThemeToggle />
@@ -124,7 +142,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-fade-in">
           <Button
             variant="outline"
             size="lg"
@@ -163,6 +181,26 @@ const Dashboard = () => {
           >
             <BarChart3 className="h-8 w-8 text-success" />
             <span className="font-semibold">Statistik</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-32 flex flex-col gap-2 hover:bg-purple-500/5 hover:border-purple-500 transition-smooth"
+            onClick={() => navigate("/grammar-checker")}
+          >
+            <CheckCircle className="h-8 w-8 text-purple-500" />
+            <span className="font-semibold">Cek Grammar</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-32 flex flex-col gap-2 hover:bg-orange-500/5 hover:border-orange-500 transition-smooth"
+            onClick={() => navigate("/sentence-builder")}
+          >
+            <Type className="h-8 w-8 text-orange-500" />
+            <span className="font-semibold">Rangkai Kalimat</span>
           </Button>
         </div>
 

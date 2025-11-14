@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +14,12 @@ serve(async (req) => {
   try {
     const { sentence, availableWords } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const authHeader = req.headers.get('Authorization')!;
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY not configured");
@@ -69,6 +76,42 @@ Validasi apakah kalimat ini benar dan berikan feedback.`
 
     const data = await response.json();
     const result = JSON.parse(data.choices[0].message.content);
+
+    // Award points if sentence is correct
+    if (result.isCorrect) {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (user) {
+        // Get or create user points
+        const { data: existingPoints } = await supabaseClient
+          .from('user_points')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        const newTotal = (existingPoints?.total_points || 0) + 15;
+        const newCount = (existingPoints?.sentence_builds_count || 0) + 1;
+
+        await supabaseClient
+          .from('user_points')
+          .upsert({
+            user_id: user.id,
+            total_points: newTotal,
+            sentence_builds_count: newCount,
+          }, { onConflict: 'user_id' });
+
+        // Log activity
+        await supabaseClient
+          .from('point_activities')
+          .insert({
+            user_id: user.id,
+            activity_type: 'sentence_builder',
+            points_earned: 15,
+            description: 'Berhasil rangkai kalimat dengan benar!',
+          });
+
+        result.pointsEarned = 15;
+      }
+    }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
