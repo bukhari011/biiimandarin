@@ -57,23 +57,29 @@ export const useExportImport = () => {
         throw new Error("Invalid JSON format");
       }
 
+      let imported = 0;
       for (const item of data) {
         if (!item.hanzi || !item.pinyin || !item.meaning) {
           continue;
         }
+
+        const hskLevel = item.hsk_level || item.hskLevel || 1;
+        const parsedHskLevel = parseInt(hskLevel.toString());
+        const finalHskLevel = (parsedHskLevel >= 1 && parsedHskLevel <= 6) ? parsedHskLevel : 1;
 
         await supabase.from("vocabulary").insert({
           user_id: user.id,
           hanzi: item.hanzi,
           pinyin: item.pinyin,
           meaning: item.meaning,
-          hsk_level: item.hsk_level || 1,
+          hsk_level: finalHskLevel,
           category: item.category || "Umum",
           image_url: item.image_url,
         });
+        imported++;
       }
 
-      toast.success(`Berhasil import ${data.length} kata!`);
+      toast.success(`Berhasil import ${imported} kata!`);
     } catch (error: any) {
       toast.error("Gagal import data: " + error.message);
     }
@@ -89,16 +95,20 @@ export const useExportImport = () => {
 
       let imported = 0;
       for (const line of lines) {
-        const [hanzi, pinyin, meaning, hskLevel, category] = line.split(",");
+        if (!line.trim()) continue;
+        const [hanzi, pinyin, meaning, hskLevel, category] = line.split(",").map(s => s.trim());
         if (!hanzi || !pinyin || !meaning) continue;
+
+        const parsedHskLevel = parseInt(hskLevel);
+        const finalHskLevel = (parsedHskLevel >= 1 && parsedHskLevel <= 6) ? parsedHskLevel : 1;
 
         await supabase.from("vocabulary").insert({
           user_id: user.id,
-          hanzi: hanzi.trim(),
-          pinyin: pinyin.trim(),
-          meaning: meaning.trim(),
-          hsk_level: parseInt(hskLevel) || 1,
-          category: category?.trim() || "Umum",
+          hanzi,
+          pinyin,
+          meaning,
+          hsk_level: finalHskLevel,
+          category: category || "Umum",
         });
         imported++;
       }

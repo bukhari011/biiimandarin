@@ -17,13 +17,13 @@ export const StatsCard = ({ title, value, icon: Icon, variant = "default" }: Sta
   };
 
   return (
-    <Card className={`${variantStyles[variant]} shadow-soft hover:shadow-medium transition-smooth`}>
+    <Card className={`${variantStyles[variant]} shadow-soft hover:shadow-medium transition-smooth hover:scale-105 cursor-pointer`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <CardTitle className="text-xs md:text-sm font-medium">{title}</CardTitle>
         <Icon className="h-4 w-4 opacity-80" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-xl md:text-2xl font-bold">{value}</div>
       </CardContent>
     </Card>
   );
