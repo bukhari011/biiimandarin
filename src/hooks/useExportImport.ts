@@ -63,9 +63,14 @@ export const useExportImport = () => {
           continue;
         }
 
-        const hskLevel = item.hsk_level || item.hskLevel || 1;
-        const parsedHskLevel = parseInt(hskLevel.toString());
-        const finalHskLevel = (parsedHskLevel >= 1 && parsedHskLevel <= 6) ? parsedHskLevel : 1;
+        // Parse HSK level more robustly
+        const hskLevel = item.hsk_level || item.hskLevel;
+        const parsedHskLevel = parseInt(String(hskLevel), 10);
+        const finalHskLevel = (!isNaN(parsedHskLevel) && parsedHskLevel >= 1 && parsedHskLevel <= 6) 
+          ? parsedHskLevel 
+          : 1;
+
+        console.log(`Importing: ${item.hanzi}, Original HSK: ${hskLevel}, Parsed: ${parsedHskLevel}, Final: ${finalHskLevel}`);
 
         await supabase.from("vocabulary").insert({
           user_id: user.id,
@@ -99,8 +104,12 @@ export const useExportImport = () => {
         const [hanzi, pinyin, meaning, hskLevel, category] = line.split(",").map(s => s.trim());
         if (!hanzi || !pinyin || !meaning) continue;
 
-        const parsedHskLevel = parseInt(hskLevel);
-        const finalHskLevel = (parsedHskLevel >= 1 && parsedHskLevel <= 6) ? parsedHskLevel : 1;
+        const parsedHskLevel = parseInt(hskLevel, 10);
+        const finalHskLevel = (!isNaN(parsedHskLevel) && parsedHskLevel >= 1 && parsedHskLevel <= 6) 
+          ? parsedHskLevel 
+          : 1;
+
+        console.log(`Importing CSV: ${hanzi}, HSK: ${hskLevel}, Parsed: ${parsedHskLevel}, Final: ${finalHskLevel}`);
 
         await supabase.from("vocabulary").insert({
           user_id: user.id,
