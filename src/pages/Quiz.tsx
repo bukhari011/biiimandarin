@@ -27,6 +27,7 @@ const Quiz = () => {
 
   const [selectedHSK, setSelectedHSK] = useState<string>("all");
   const [showPinyin, setShowPinyin] = useState(true);
+  const [quizMode, setQuizMode] = useState<"meaning" | "hanzi">("meaning");
   const [quizStarted, setQuizStarted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -56,21 +57,41 @@ const Quiz = () => {
       .slice(0, 10);
 
     const generatedQuestions = shuffled.map((vocab) => {
-      const wrongAnswers = vocabulary
-        .filter((v) => v.id !== vocab.id && v.hsk_level === vocab.hsk_level)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3)
-        .map((v) => v.meaning);
+      if (quizMode === "meaning") {
+        // Mode: Tebak arti dari hanzi
+        const wrongAnswers = vocabulary
+          .filter((v) => v.id !== vocab.id && v.hsk_level === vocab.hsk_level)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3)
+          .map((v) => v.meaning);
 
-      const options = [...wrongAnswers, vocab.meaning].sort(() => Math.random() - 0.5);
+        const options = [...wrongAnswers, vocab.meaning].sort(() => Math.random() - 0.5);
 
-      return {
-        id: vocab.id,
-        hanzi: vocab.hanzi,
-        pinyin: vocab.pinyin,
-        correctAnswer: vocab.meaning,
-        options,
-      };
+        return {
+          id: vocab.id,
+          hanzi: vocab.hanzi,
+          pinyin: vocab.pinyin,
+          correctAnswer: vocab.meaning,
+          options,
+        };
+      } else {
+        // Mode: Tebak hanzi dari arti
+        const wrongAnswers = vocabulary
+          .filter((v) => v.id !== vocab.id && v.hsk_level === vocab.hsk_level)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3)
+          .map((v) => v.hanzi);
+
+        const options = [...wrongAnswers, vocab.hanzi].sort(() => Math.random() - 0.5);
+
+        return {
+          id: vocab.id,
+          hanzi: vocab.meaning, // Show meaning as question
+          pinyin: vocab.pinyin,
+          correctAnswer: vocab.hanzi,
+          options,
+        };
+      }
     });
 
     setQuestions(generatedQuestions);
@@ -159,9 +180,24 @@ const Quiz = () => {
                   </Select>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Switch id="quiz-pinyin" checked={showPinyin} onCheckedChange={setShowPinyin} />
-                  <Label htmlFor="quiz-pinyin">Tampilkan Pinyin</Label>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Mode Quiz</Label>
+                    <Select value={quizMode} onValueChange={(val: "meaning" | "hanzi") => setQuizMode(val)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="meaning">Tebak Arti dari Hanzi</SelectItem>
+                        <SelectItem value="hanzi">Tebak Hanzi dari Arti</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch id="quiz-pinyin" checked={showPinyin} onCheckedChange={setShowPinyin} />
+                    <Label htmlFor="quiz-pinyin">Tampilkan Pinyin</Label>
+                  </div>
                 </div>
               </div>
 
@@ -233,10 +269,12 @@ const Quiz = () => {
                 </h2>
                 <AudioButton text={currentQuestion.pinyin} />
               </div>
-              {showPinyin && (
+              {showPinyin && quizMode === "meaning" && (
                 <p className="text-xl md:text-2xl text-muted-foreground">{currentQuestion.pinyin}</p>
               )}
-              <p className="text-lg text-muted-foreground pt-4">Pilih arti yang benar:</p>
+              <p className="text-lg text-muted-foreground pt-4">
+                {quizMode === "meaning" ? "Pilih arti yang benar:" : "Pilih hanzi yang benar:"}
+              </p>
             </div>
 
             {/* Options */}
