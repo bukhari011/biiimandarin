@@ -20,6 +20,7 @@ interface GrammarResult {
   correctedText: string;
   errors: GrammarError[];
   explanation: string;
+  pointsEarned?: number;
 }
 
 const GrammarChecker = () => {
@@ -99,6 +100,14 @@ const GrammarChecker = () => {
                 <p className="text-2xl font-medium text-foreground">{result.correctedText}</p>
               </CardContent>
             </Card>
+
+            {result.pointsEarned && (
+              <div className="p-4 bg-success/10 border border-success rounded-lg">
+                <p className="text-success font-semibold text-center text-lg">
+                  🎉 Grammar Sempurna! +{result.pointsEarned} Poin!
+                </p>
+              </div>
+            )}
 
             {result.errors.length > 0 && (
               <Card className="shadow-medium">
