@@ -63,14 +63,13 @@ export const useExportImport = () => {
           continue;
         }
 
-        // Parse HSK level more robustly
-        const hskLevel = item.hsk_level || item.hskLevel;
-        const parsedHskLevel = parseInt(String(hskLevel), 10);
+        // Parse HSK level - extract number from strings like "HSK 2", "HSK2", "2"
+        const hskLevel = item.hsk_level || item.hskLevel || "1";
+        const hskString = String(hskLevel).replace(/[^0-9]/g, ''); // Extract only numbers
+        const parsedHskLevel = parseInt(hskString, 10);
         const finalHskLevel = (!isNaN(parsedHskLevel) && parsedHskLevel >= 1 && parsedHskLevel <= 6) 
           ? parsedHskLevel 
           : 1;
-
-        console.log(`Importing: ${item.hanzi}, Original HSK: ${hskLevel}, Parsed: ${parsedHskLevel}, Final: ${finalHskLevel}`);
 
         await supabase.from("vocabulary").insert({
           user_id: user.id,
@@ -104,12 +103,12 @@ export const useExportImport = () => {
         const [hanzi, pinyin, meaning, hskLevel, category] = line.split(",").map(s => s.trim());
         if (!hanzi || !pinyin || !meaning) continue;
 
-        const parsedHskLevel = parseInt(hskLevel, 10);
+        // Parse HSK level - extract number from strings like "HSK 2", "HSK2", "2"
+        const hskString = String(hskLevel || "1").replace(/[^0-9]/g, ''); // Extract only numbers
+        const parsedHskLevel = parseInt(hskString, 10);
         const finalHskLevel = (!isNaN(parsedHskLevel) && parsedHskLevel >= 1 && parsedHskLevel <= 6) 
           ? parsedHskLevel 
           : 1;
-
-        console.log(`Importing CSV: ${hanzi}, HSK: ${hskLevel}, Parsed: ${parsedHskLevel}, Final: ${finalHskLevel}`);
 
         await supabase.from("vocabulary").insert({
           user_id: user.id,
@@ -128,10 +127,29 @@ export const useExportImport = () => {
     }
   };
 
+  const downloadTemplate = (hskLevel: number) => {
+    const headers = ["Hanzi", "Pinyin", "Meaning", "HSK Level", "Category"];
+    const exampleRows = [
+      ["你好", "nǐ hǎo", "Hello", hskLevel.toString(), "Greetings"],
+      ["谢谢", "xièxie", "Thank you", hskLevel.toString(), "Greetings"],
+    ];
+    
+    const csv = [headers, ...exampleRows].map((row) => row.join(",")).join("\n");
+    const dataBlob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `template-hsk${hskLevel}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Template HSK ${hskLevel} berhasil didownload!`);
+  };
+
   return {
     exportToJSON,
     exportToCSV,
     importFromJSON,
     importFromCSV,
+    downloadTemplate,
   };
 };

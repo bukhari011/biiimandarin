@@ -14,7 +14,7 @@ const VocabularyPage = () => {
   const navigate = useNavigate();
   const { vocabulary, loading, addVocabulary, updateVocabulary, deleteVocabulary } = useVocabulary();
   const { toggleMastered } = useProgress();
-  const { exportToJSON, exportToCSV, importFromJSON, importFromCSV } = useExportImport();
+  const { exportToJSON, exportToCSV, importFromJSON, importFromCSV, downloadTemplate } = useExportImport();
   const [filterHSK, setFilterHSK] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("Semua");
   const [filterMastered, setFilterMastered] = useState<string>("all");
@@ -92,6 +92,18 @@ const VocabularyPage = () => {
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
+              <Select onValueChange={(value) => downloadTemplate(parseInt(value))}>
+                <SelectTrigger className="w-[180px] h-9">
+                  <SelectValue placeholder="📥 Template HSK" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5, 6].map((level) => (
+                    <SelectItem key={level} value={level.toString()}>
+                      Template HSK {level}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button variant="outline" size="sm" onClick={() => exportToJSON(vocabulary)}>
                 <Download className="mr-2 h-4 w-4" />
                 JSON
