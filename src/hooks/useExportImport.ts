@@ -57,21 +57,21 @@ export const useExportImport = () => {
         throw new Error("Invalid JSON format");
       }
 
-      let imported = 0;
+      // Prepare batch insert data
+      const vocabToInsert = [];
       for (const item of data) {
         if (!item.hanzi || !item.pinyin || !item.meaning) {
           continue;
         }
 
-        // Parse HSK level - extract number from strings like "HSK 2", "HSK2", "2"
         const hskLevel = item.hsk_level || item.hskLevel || "1";
-        const hskString = String(hskLevel).replace(/[^0-9]/g, ''); // Extract only numbers
+        const hskString = String(hskLevel).replace(/[^0-9]/g, '');
         const parsedHskLevel = parseInt(hskString, 10);
         const finalHskLevel = (!isNaN(parsedHskLevel) && parsedHskLevel >= 1 && parsedHskLevel <= 6) 
           ? parsedHskLevel 
           : 1;
 
-        await supabase.from("vocabulary").insert({
+        vocabToInsert.push({
           user_id: user.id,
           hanzi: item.hanzi,
           pinyin: item.pinyin,
@@ -80,10 +80,19 @@ export const useExportImport = () => {
           category: item.category || "Umum",
           image_url: item.image_url,
         });
-        imported++;
       }
 
-      toast.success(`Berhasil import ${imported} kata!`);
+      // Batch insert all at once (max 1000 per batch for Supabase)
+      if (vocabToInsert.length > 0) {
+        const batchSize = 1000;
+        for (let i = 0; i < vocabToInsert.length; i += batchSize) {
+          const batch = vocabToInsert.slice(i, i + batchSize);
+          const { error } = await supabase.from("vocabulary").insert(batch);
+          if (error) throw error;
+        }
+      }
+
+      toast.success(`Berhasil import ${vocabToInsert.length} kata!`);
     } catch (error: any) {
       toast.error("Gagal import data: " + error.message);
     }
@@ -97,20 +106,20 @@ export const useExportImport = () => {
       const text = await file.text();
       const lines = text.split("\n").slice(1); // Skip header
 
-      let imported = 0;
+      // Prepare batch insert data
+      const vocabToInsert = [];
       for (const line of lines) {
         if (!line.trim()) continue;
         const [hanzi, pinyin, meaning, hskLevel, category] = line.split(",").map(s => s.trim());
         if (!hanzi || !pinyin || !meaning) continue;
 
-        // Parse HSK level - extract number from strings like "HSK 2", "HSK2", "2"
-        const hskString = String(hskLevel || "1").replace(/[^0-9]/g, ''); // Extract only numbers
+        const hskString = String(hskLevel || "1").replace(/[^0-9]/g, '');
         const parsedHskLevel = parseInt(hskString, 10);
         const finalHskLevel = (!isNaN(parsedHskLevel) && parsedHskLevel >= 1 && parsedHskLevel <= 6) 
           ? parsedHskLevel 
           : 1;
 
-        await supabase.from("vocabulary").insert({
+        vocabToInsert.push({
           user_id: user.id,
           hanzi,
           pinyin,
@@ -118,10 +127,19 @@ export const useExportImport = () => {
           hsk_level: finalHskLevel,
           category: category || "Umum",
         });
-        imported++;
       }
 
-      toast.success(`Berhasil import ${imported} kata!`);
+      // Batch insert all at once (max 1000 per batch for Supabase)
+      if (vocabToInsert.length > 0) {
+        const batchSize = 1000;
+        for (let i = 0; i < vocabToInsert.length; i += batchSize) {
+          const batch = vocabToInsert.slice(i, i + batchSize);
+          const { error } = await supabase.from("vocabulary").insert(batch);
+          if (error) throw error;
+        }
+      }
+
+      toast.success(`Berhasil import ${vocabToInsert.length} kata!`);
     } catch (error: any) {
       toast.error("Gagal import data: " + error.message);
     }

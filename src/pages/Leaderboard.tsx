@@ -6,6 +6,7 @@ import { Trophy, Award, Flame, BookOpen, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface LeaderboardEntry {
   user_id: string;
@@ -25,28 +26,45 @@ const Leaderboard = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchLeaderboard();
+    const timer = setTimeout(() => {
+      fetchLeaderboard();
+    }, 100); // Slight delay to batch requests
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchLeaderboard = async () => {
     try {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUserId(user?.id || null);
 
-      // Get all users with their stats
-      const { data: progressData } = await supabase
-        .from("user_progress")
-        .select("user_id, mastered, review_count");
-
-      const { data: streakData } = await supabase
-        .from("user_streaks")
-        .select("user_id, current_streak, longest_streak");
-
-      const { data: profileData } = await supabase
+      // Single optimized query to get all data at once
+      const { data: profileData, error } = await supabase
         .from("profiles")
-        .select("id, username, avatar_url");
+        .select(`
+          id,
+          username,
+          avatar_url
+        `)
+        .limit(100);
 
-      if (!progressData || !streakData || !profileData) return;
+      if (error) throw error;
+      if (!profileData) return;
+
+      // Batch fetch progress and streaks for all users
+      const userIds = profileData.map(p => p.id);
+      
+      const [progressResult, streakResult] = await Promise.all([
+        supabase
+          .from("user_progress")
+          .select("user_id, mastered, review_count")
+          .in("user_id", userIds),
+        supabase
+          .from("user_streaks")
+          .select("user_id, current_streak, longest_streak")
+          .in("user_id", userIds)
+      ]);
 
       // Aggregate stats per user
       const userStats = new Map<string, LeaderboardEntry>();
@@ -64,7 +82,8 @@ const Leaderboard = () => {
         });
       });
 
-      progressData.forEach((progress) => {
+      // Process progress data
+      progressResult.data?.forEach((progress) => {
         const entry = userStats.get(progress.user_id);
         if (entry) {
           if (progress.mastered) entry.mastered_count++;
@@ -72,7 +91,8 @@ const Leaderboard = () => {
         }
       });
 
-      streakData.forEach((streak) => {
+      // Process streak data
+      streakResult.data?.forEach((streak) => {
         const entry = userStats.get(streak.user_id);
         if (entry) {
           entry.current_streak = streak.current_streak || 0;
@@ -80,7 +100,7 @@ const Leaderboard = () => {
         }
       });
 
-      // Convert to array and sort by mastered count, then by streak
+      // Sort and rank
       const sortedLeaderboard = Array.from(userStats.values())
         .sort((a, b) => {
           if (b.mastered_count !== a.mastered_count) {
@@ -88,6 +108,7 @@ const Leaderboard = () => {
           }
           return b.current_streak - a.current_streak;
         })
+        .slice(0, 50) // Limit to top 50
         .map((entry, index) => ({
           ...entry,
           rank: index + 1,
@@ -96,6 +117,7 @@ const Leaderboard = () => {
       setLeaderboard(sortedLeaderboard);
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
+      toast.error("Gagal memuat leaderboard");
     } finally {
       setLoading(false);
     }
