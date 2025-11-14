@@ -17,13 +17,18 @@ const VocabularyPage = () => {
   const { exportToJSON, exportToCSV, importFromJSON, importFromCSV } = useExportImport();
   const [filterHSK, setFilterHSK] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("Semua");
+  const [filterMastered, setFilterMastered] = useState<string>("all");
   const [editingVocab, setEditingVocab] = useState<VocabularyWithProgress | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredVocab = vocabulary.filter((vocab) => {
     const hskMatch = filterHSK === "all" || vocab.hsk_level.toString() === filterHSK;
     const categoryMatch = filterCategory === "Semua" || vocab.category === filterCategory;
-    return hskMatch && categoryMatch;
+    const masteredMatch = 
+      filterMastered === "all" ||
+      (filterMastered === "mastered" && vocab.progress?.mastered) ||
+      (filterMastered === "unmastered" && !vocab.progress?.mastered);
+    return hskMatch && categoryMatch && masteredMatch;
   });
 
   const handleAdd = async (newVocab: any) => {
@@ -121,13 +126,13 @@ const VocabularyPage = () => {
         </div>
       </header>
 
-      <div className="border-b bg-card/50">
+      <div className="border-b bg-card/50 sticky top-[73px] md:top-[81px] z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">HSK Level:</span>
+              <span className="text-sm font-medium text-foreground">HSK:</span>
               <Select value={filterHSK} onValueChange={setFilterHSK}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-28">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -144,7 +149,7 @@ const VocabularyPage = () => {
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">Kategori:</span>
               <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -153,6 +158,20 @@ const VocabularyPage = () => {
                       {cat}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-foreground">Status:</span>
+              <Select value={filterMastered} onValueChange={setFilterMastered}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua</SelectItem>
+                  <SelectItem value="unmastered">Belum Hafal</SelectItem>
+                  <SelectItem value="mastered">Sudah Hafal</SelectItem>
                 </SelectContent>
               </Select>
             </div>

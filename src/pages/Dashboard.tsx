@@ -62,36 +62,44 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-soft">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 md:py-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-1">Mandarin Tracker</h1>
-              <p className="text-muted-foreground">🔥 Streak: {streak} hari</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Mandarin Tracker</h1>
+              <p className="text-sm md:text-base text-muted-foreground">🔥 Streak: {streak} hari</p>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate("/vocabulary")} size="lg" className="shadow-medium">
-                <Plus className="mr-2 h-5 w-5" />
-                Tambah Kata
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button onClick={() => navigate("/vocabulary")} size="sm" className="shadow-medium flex-1 sm:flex-initial">
+                <Plus className="mr-1 md:mr-2 h-4 md:h-5 w-4 md:w-5" />
+                <span className="text-xs md:text-sm">Tambah</span>
               </Button>
-              <Button onClick={handleLogout} variant="outline" size="lg">
-                <LogOut className="mr-2 h-5 w-5" />
-                Logout
+              <Button onClick={handleLogout} variant="outline" size="sm" className="flex-1 sm:flex-initial">
+                <LogOut className="mr-1 md:mr-2 h-4 md:h-5 w-4 md:w-5" />
+                <span className="text-xs md:text-sm">Logout</span>
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
-          <StatsCard title="Total Kosakata" value={totalWords} icon={BookOpen} variant="primary" />
-          <StatsCard title="Sudah Hafal" value={masteredWords} icon={Trophy} variant="secondary" />
-          <StatsCard title="Sedang Dipelajari" value={inProgressWords} icon={Brain} variant="accent" />
-          <StatsCard
-            title="Tingkat Kemajuan"
-            value={totalWords > 0 ? `${Math.round((masteredWords / totalWords) * 100)}%` : "0%"}
-            icon={BookMarked}
-          />
+      <main className="container mx-auto px-4 py-6 md:py-8 space-y-6 md:space-y-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
+          <div onClick={() => navigate("/vocabulary")} className="cursor-pointer">
+            <StatsCard title="Total Kosakata" value={totalWords} icon={BookOpen} variant="primary" />
+          </div>
+          <div onClick={() => navigate("/vocabulary?filter=mastered")} className="cursor-pointer">
+            <StatsCard title="Sudah Hafal" value={masteredWords} icon={Trophy} variant="secondary" />
+          </div>
+          <div onClick={() => navigate("/vocabulary?filter=learning")} className="cursor-pointer">
+            <StatsCard title="Sedang Dipelajari" value={inProgressWords} icon={Brain} variant="accent" />
+          </div>
+          <div onClick={() => navigate("/statistics")} className="cursor-pointer">
+            <StatsCard
+              title="Tingkat Kemajuan"
+              value={totalWords > 0 ? `${Math.round((masteredWords / totalWords) * 100)}%` : "0%"}
+              icon={BookMarked}
+            />
+          </div>
         </div>
 
         <div className="bg-card rounded-lg border p-6 shadow-soft animate-fade-in">
