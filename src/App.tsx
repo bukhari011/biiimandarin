@@ -14,6 +14,8 @@ import Statistics from "./pages/Statistics";
 import Achievements from "./pages/Achievements";
 import HanziPractice from "./pages/HanziPractice";
 import Leaderboard from "./pages/Leaderboard";
+import GrammarChecker from "./pages/GrammarChecker";
+import SentenceBuilder from "./pages/SentenceBuilder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -88,6 +90,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Leaderboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/grammar-checker"
+              element={
+                <ProtectedRoute>
+                  <GrammarChecker />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sentence-builder"
+              element={
+                <ProtectedRoute>
+                  <SentenceBuilder />
                 </ProtectedRoute>
               }
             />

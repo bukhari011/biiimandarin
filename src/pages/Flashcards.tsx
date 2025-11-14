@@ -29,8 +29,11 @@ const Flashcards = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editedWord, setEditedWord] = useState({ hanzi: "", pinyin: "", meaning: "" });
 
+  // Store shuffled cards in state to prevent auto-reordering
+  const [shuffledCards, setShuffledCards] = useState<typeof vocabulary>([]);
+
   // Filter and shuffle vocabulary with prioritization
-  const filteredVocabulary = useMemo(() => {
+  useEffect(() => {
     let filtered = vocabulary;
 
     // Filter by HSK level
@@ -50,8 +53,10 @@ const Flashcards = () => {
 
     // Combine and shuffle
     const combined = [...unmastered, ...masteredSample];
-    return combined.sort(() => Math.random() - 0.5);
+    setShuffledCards(combined.sort(() => Math.random() - 0.5));
   }, [vocabulary, selectedHSK]);
+
+  const filteredVocabulary = shuffledCards;
 
   const currentCard = filteredVocabulary[currentIndex];
   const progress = ((currentIndex + 1) / filteredVocabulary.length) * 100;
