@@ -52,13 +52,12 @@ const GrammarChecker = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-4">
+      <div className="max-w-2xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">Cek Grammar</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Cek Grammar</h1>
           <Button onClick={() => navigate("/")} variant="outline" size="sm">
-            <Home className="h-4 w-4 mr-2" />
-            Beranda
+            <Home className="h-4 w-4" />
           </Button>
         </div>
 

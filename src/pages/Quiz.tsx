@@ -35,6 +35,7 @@ const Quiz = () => {
   const [score, setScore] = useState(0);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [quizCount, setQuizCount] = useState<string>("10");
 
   const filteredVocabulary = useMemo(() => {
     let filtered = vocabulary;
@@ -52,9 +53,10 @@ const Quiz = () => {
 
   const startQuiz = () => {
     // Generate shuffled questions once at quiz start
+    const count = parseInt(quizCount);
     const shuffled = [...filteredVocabulary]
       .sort(() => Math.random() - 0.5)
-      .slice(0, 10);
+      .slice(0, Math.min(count, filteredVocabulary.length));
 
     const generatedQuestions = shuffled.map((vocab) => {
       if (quizMode === "meaning") {
@@ -146,69 +148,72 @@ const Quiz = () => {
 
   if (!quizStarted) {
     return (
-      <div className="min-h-screen bg-background p-4 md:p-8">
-        <div className="max-w-4xl mx-auto space-y-6">
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-2xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">Quiz</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Quiz</h1>
             <Button onClick={() => navigate("/")} variant="outline" size="sm">
-              <Home className="h-4 w-4 mr-2" />
-              Beranda
+              <Home className="h-4 w-4" />
             </Button>
           </div>
 
           <Card className="shadow-medium">
-            <CardContent className="pt-6 space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-lg font-semibold mb-3 block">Pilih Level HSK</Label>
-                  <Select value={selectedHSK} onValueChange={setSelectedHSK}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Pilih HSK" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Semua HSK</SelectItem>
-                      <SelectItem value="1">HSK 1</SelectItem>
-                      <SelectItem value="2">HSK 2</SelectItem>
-                      <SelectItem value="3">HSK 3</SelectItem>
-                      <SelectItem value="4">HSK 4</SelectItem>
-                      <SelectItem value="5">HSK 5</SelectItem>
-                      <SelectItem value="6">HSK 6</SelectItem>
-                      <SelectItem value="1,2">HSK 1 & 2</SelectItem>
-                      <SelectItem value="1,2,3">HSK 1, 2 & 3</SelectItem>
-                      <SelectItem value="4,5,6">HSK 4, 5 & 6</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-base font-semibold mb-2 block">Mode Quiz</Label>
-                    <Select value={quizMode} onValueChange={(val: "meaning" | "hanzi") => setQuizMode(val)}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="meaning">Tebak Arti dari Hanzi</SelectItem>
-                        <SelectItem value="hanzi">Tebak Hanzi dari Arti</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch id="quiz-pinyin" checked={showPinyin} onCheckedChange={setShowPinyin} />
-                    <Label htmlFor="quiz-pinyin">Tampilkan Pinyin</Label>
-                  </div>
-                </div>
+            <CardContent className="pt-6 space-y-4">
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Level HSK</Label>
+                <Select value={selectedHSK} onValueChange={setSelectedHSK}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih HSK" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua HSK</SelectItem>
+                    <SelectItem value="1">HSK 1</SelectItem>
+                    <SelectItem value="2">HSK 2</SelectItem>
+                    <SelectItem value="3">HSK 3</SelectItem>
+                    <SelectItem value="4">HSK 4</SelectItem>
+                    <SelectItem value="5">HSK 5</SelectItem>
+                    <SelectItem value="6">HSK 6</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="text-center space-y-4 pt-4">
-                <p className="text-muted-foreground">
-                  Quiz terdiri dari 10 pertanyaan pilihan ganda acak
-                </p>
-                <Button onClick={startQuiz} size="lg" className="w-full sm:w-auto">
-                  Mulai Quiz
-                </Button>
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Mode Quiz</Label>
+                <Select value={quizMode} onValueChange={(val: "meaning" | "hanzi") => setQuizMode(val)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="meaning">Tebak Arti dari Hanzi</SelectItem>
+                    <SelectItem value="hanzi">Tebak Hanzi dari Arti</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Jumlah Soal</Label>
+                <Select value={quizCount} onValueChange={setQuizCount}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 Soal</SelectItem>
+                    <SelectItem value="10">10 Soal</SelectItem>
+                    <SelectItem value="15">15 Soal</SelectItem>
+                    <SelectItem value="20">20 Soal</SelectItem>
+                    <SelectItem value="30">30 Soal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Switch id="quiz-pinyin" checked={showPinyin} onCheckedChange={setShowPinyin} />
+                <Label htmlFor="quiz-pinyin" className="text-sm">Tampilkan Pinyin</Label>
+              </div>
+
+              <Button onClick={startQuiz} size="lg" className="w-full">
+                Mulai Quiz
+              </Button>
             </CardContent>
           </Card>
         </div>
