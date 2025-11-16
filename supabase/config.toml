@@ -1,1 +1,7 @@
 project_id = "sfahelvbmlmyflbnicvc"
+
+[functions.validate-sentence]
+verify_jwt = false
+
+[functions.check-grammar]
+verify_jwt = false
