@@ -21,15 +21,16 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="mandarin-theme">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Navbar />
-          <Routes>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" storageKey="mandarin-theme">
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Navbar />
+            <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route
               path="/"
@@ -117,6 +118,7 @@ const App = () => (
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
-);
+  );
+}
 
 export default App;
