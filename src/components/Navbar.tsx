@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Home, BookOpen, BookMarked, Brain, Pencil, BarChart3, CheckCircle, Type, Award, Users } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import logo from "@/assets/mandarin-zero-logo.png";
 
 export const Navbar = () => {
   const navigate = useNavigate();
@@ -32,12 +33,15 @@ export const Navbar = () => {
     <nav className="sticky top-0 z-50 bg-card border-b shadow-soft">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
-          <h1 
+          <div 
             onClick={() => handleNavigate("/")}
-            className="text-lg md:text-xl font-bold text-foreground cursor-pointer hover:text-primary transition-smooth"
+            className="cursor-pointer hover:opacity-80 transition-smooth flex items-center gap-2"
           >
-            Mandarin Tracker
-          </h1>
+            <img src={logo} alt="Mandarin Zero" className="h-10 w-10" />
+            <span className="text-lg md:text-xl font-bold text-foreground hidden sm:inline">
+              Mandarin Zero
+            </span>
+          </div>
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
