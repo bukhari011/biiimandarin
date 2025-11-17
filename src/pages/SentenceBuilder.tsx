@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Home, Shuffle, CheckCircle, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Shuffle, CheckCircle, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useVocabulary } from "@/hooks/useVocabulary";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,34 +18,61 @@ interface ValidationResult {
   pointsEarned?: number;
 }
 
+interface WordWithDetails {
+  hanzi: string;
+  pinyin: string;
+  meaning: string;
+}
+
 const SentenceBuilder = () => {
   const navigate = useNavigate();
   const { vocabulary } = useVocabulary();
-  const [selectedWords, setSelectedWords] = useState<string[]>([]);
-  const [availableWords, setAvailableWords] = useState<string[]>([]);
-  const [targetSentence, setTargetSentence] = useState("");
+  const [selectedWords, setSelectedWords] = useState<WordWithDetails[]>([]);
+  const [availableWords, setAvailableWords] = useState<WordWithDetails[]>([]);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPinyin, setShowPinyin] = useState(true);
+  const [points, setPoints] = useState(0);
+
+  useEffect(() => {
+    fetchPoints();
+  }, []);
+
+  const fetchPoints = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("user_points")
+      .select("total_points")
+      .eq("user_id", user.id)
+      .single();
+
+    if (data) setPoints(data.total_points);
+  };
 
   const generateChallenge = () => {
     // Pick 5-8 random words
     const shuffled = [...vocabulary].sort(() => Math.random() - 0.5);
     const picked = shuffled.slice(0, Math.floor(Math.random() * 4) + 5);
-    const words = picked.map((v) => v.hanzi);
+    const words = picked.map((v) => ({
+      hanzi: v.hanzi,
+      pinyin: v.pinyin,
+      meaning: v.meaning,
+    }));
     
     setAvailableWords(words.sort(() => Math.random() - 0.5));
     setSelectedWords([]);
     setValidationResult(null);
-    setTargetSentence(words.join(""));
   };
 
-  const handleWordClick = (word: string, fromAvailable: boolean) => {
+  const handleWordClick = (word: WordWithDetails, fromAvailable: boolean) => {
     if (fromAvailable) {
       setSelectedWords([...selectedWords, word]);
-      setAvailableWords(availableWords.filter((w) => w !== word));
+      setAvailableWords(availableWords.filter((w) => w.hanzi !== word.hanzi));
     } else {
       setAvailableWords([...availableWords, word]);
-      setSelectedWords(selectedWords.filter((w) => w !== word));
+      setSelectedWords(selectedWords.filter((w) => w.hanzi !== word.hanzi));
     }
   };
 
@@ -55,11 +84,13 @@ const SentenceBuilder = () => {
 
     setLoading(true);
     try {
-      const builtSentence = selectedWords.join("");
+      const builtSentence = selectedWords.map(w => w.hanzi).join("");
+      const allWords = [...selectedWords, ...availableWords].map(w => w.hanzi);
+      
       const { data, error } = await supabase.functions.invoke("validate-sentence", {
         body: { 
           sentence: builtSentence,
-          availableWords: [...selectedWords, ...availableWords]
+          availableWords: allWords
         },
       });
 
@@ -68,6 +99,7 @@ const SentenceBuilder = () => {
       
       if (data.isCorrect) {
         toast.success("Benar! 🎉");
+        await fetchPoints(); // Refresh points
       } else {
         toast.error("Belum tepat, coba lagi");
       }
@@ -80,13 +112,26 @@ const SentenceBuilder = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen bg-background p-4 pt-20">
       <div className="max-w-2xl mx-auto space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Rangkai Kalimat</h1>
-          <Button onClick={() => navigate("/")} variant="outline" size="sm">
-            <Home className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="show-pinyin"
+                checked={showPinyin}
+                onCheckedChange={setShowPinyin}
+              />
+              <Label htmlFor="show-pinyin" className="text-sm whitespace-nowrap">
+                Tampilkan Pinyin
+              </Label>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Poin</p>
+              <p className="text-xl font-bold text-primary">{points}</p>
+            </div>
+          </div>
         </div>
 
         <Card className="shadow-medium">
@@ -116,11 +161,14 @@ const SentenceBuilder = () => {
                       <div className="flex flex-wrap gap-2">
                         {selectedWords.map((word, index) => (
                           <Badge
-                            key={`${word}-${index}`}
-                            className="text-2xl px-4 py-2 cursor-pointer hover:bg-destructive"
+                            key={`${word.hanzi}-${index}`}
+                            className="text-lg sm:text-xl px-3 py-2 cursor-pointer hover:bg-destructive flex flex-col items-center"
                             onClick={() => handleWordClick(word, false)}
                           >
-                            {word}
+                            <span>{word.hanzi}</span>
+                            {showPinyin && (
+                              <span className="text-[10px] opacity-80">{word.pinyin}</span>
+                            )}
                           </Badge>
                         ))}
                       </div>
@@ -134,12 +182,15 @@ const SentenceBuilder = () => {
                   <div className="flex flex-wrap gap-2 min-h-[60px]">
                     {availableWords.map((word, index) => (
                       <Badge
-                        key={`${word}-${index}`}
+                        key={`${word.hanzi}-${index}`}
                         variant="outline"
-                        className="text-2xl px-4 py-2 cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                        className="text-lg sm:text-xl px-3 py-2 cursor-pointer hover:bg-primary hover:text-primary-foreground flex flex-col items-center"
                         onClick={() => handleWordClick(word, true)}
                       >
-                        {word}
+                        <span>{word.hanzi}</span>
+                        {showPinyin && (
+                          <span className="text-[10px] opacity-80">{word.pinyin}</span>
+                        )}
                       </Badge>
                     ))}
                   </div>
@@ -195,7 +246,7 @@ const SentenceBuilder = () => {
               {!validationResult.isCorrect && (
                 <div>
                   <p className="text-sm font-medium mb-2">Kalimat yang Benar:</p>
-                  <p className="text-2xl font-medium text-success">{validationResult.correctSentence}</p>
+                  <p className="text-xl sm:text-2xl font-medium text-success break-words">{validationResult.correctSentence}</p>
                 </div>
               )}
               
@@ -209,7 +260,7 @@ const SentenceBuilder = () => {
               
               <div>
                 <p className="text-sm font-medium mb-2">Penjelasan:</p>
-                <p className="text-muted-foreground whitespace-pre-line">{validationResult.feedback}</p>
+                <p className="text-muted-foreground whitespace-pre-line text-sm">{validationResult.feedback}</p>
               </div>
 
               {validationResult.errors.length > 0 && (

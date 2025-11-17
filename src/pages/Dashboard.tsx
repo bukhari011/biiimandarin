@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { ProgressBar } from "@/components/ProgressBar";
 import { NotificationSettings } from "@/components/NotificationSettings";
-import { BookOpen, BookMarked, Brain, Trophy, Plus, BarChart3, Award, Pencil, FileDown, LogOut, Users, CheckCircle, Type } from "lucide-react";
+import { BookOpen, BookMarked, Brain, Trophy, Plus, BarChart3, Award, Pencil, FileDown, LogOut, Users, CheckCircle, Type, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVocabulary } from "@/hooks/useVocabulary";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 const Dashboard = () => {
@@ -15,6 +17,16 @@ const Dashboard = () => {
   const { vocabulary, loading } = useVocabulary();
   const [streak, setStreak] = useState(0);
   const [points, setPoints] = useState(0);
+  const [audioEnabled, setAudioEnabled] = useState(() => {
+    const saved = localStorage.getItem("audioEnabled");
+    return saved !== null ? saved === "true" : true;
+  });
+
+  const handleAudioToggle = (enabled: boolean) => {
+    setAudioEnabled(enabled);
+    localStorage.setItem("audioEnabled", enabled.toString());
+    toast.success(enabled ? "Audio diaktifkan" : "Audio dinonaktifkan");
+  };
 
   useEffect(() => {
     fetchStreak();
@@ -77,7 +89,7 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">
       <header className="border-b bg-card shadow-soft">
         <div className="container mx-auto px-4 py-4 md:py-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -227,6 +239,30 @@ const Dashboard = () => {
         </div>
 
         <NotificationSettings />
+
+        <div className="bg-card rounded-lg border p-6 shadow-soft animate-fade-in">
+          <h2 className="text-xl font-semibold text-foreground mb-4">Pengaturan Audio</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {audioEnabled ? (
+                <Volume2 className="h-5 w-5 text-primary" />
+              ) : (
+                <VolumeX className="h-5 w-5 text-muted-foreground" />
+              )}
+              <Label htmlFor="audio-toggle" className="text-base cursor-pointer">
+                Aktifkan Suara
+              </Label>
+            </div>
+            <Switch
+              id="audio-toggle"
+              checked={audioEnabled}
+              onCheckedChange={handleAudioToggle}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">
+            Mengaktifkan atau menonaktifkan audio pronunciation pada flashcard dan quiz
+          </p>
+        </div>
       </main>
     </div>
   );

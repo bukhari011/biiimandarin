@@ -52,7 +52,7 @@ const GrammarChecker = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen bg-background p-4 pt-20">
       <div className="max-w-2xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Cek Grammar</h1>

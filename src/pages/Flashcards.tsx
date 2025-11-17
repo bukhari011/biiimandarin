@@ -119,7 +119,7 @@ const Flashcards = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center pt-20">
         <p className="text-muted-foreground">Memuat...</p>
       </div>
     );
@@ -127,7 +127,7 @@ const Flashcards = () => {
 
   if (filteredVocabulary.length === 0) {
     return (
-      <div className="min-h-screen bg-background p-4 md:p-8">
+      <div className="min-h-screen bg-background p-4 md:p-8 pt-20">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-8">Flashcards</h1>
           <Card>
@@ -141,7 +141,7 @@ const Flashcards = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen bg-background p-4 pt-20">
       <div className="max-w-2xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Flashcard</h1>
