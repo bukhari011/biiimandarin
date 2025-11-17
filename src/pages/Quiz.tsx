@@ -140,15 +140,15 @@ const Quiz = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center pt-20">
         <p className="text-muted-foreground">Memuat...</p>
       </div>
     );
   }
 
   if (!quizStarted) {
-    return (
-      <div className="min-h-screen bg-background p-4">
+  return (
+    <div className="min-h-screen bg-background p-4 pt-20">
         <div className="max-w-2xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">Quiz</h1>
@@ -223,7 +223,7 @@ const Quiz = () => {
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen bg-background p-4 md:p-8">
+      <div className="min-h-screen bg-background p-4 md:p-8 pt-20">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-8">Quiz</h1>
           <Card>
@@ -240,7 +240,7 @@ const Quiz = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8 pt-20">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -269,15 +269,17 @@ const Quiz = () => {
           <CardContent className="pt-8 pb-8 space-y-8">
             <div className="text-center space-y-4">
               <div className="flex items-center justify-center gap-3">
-                <h2 className="text-4xl md:text-6xl font-bold text-foreground">
+                <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-foreground break-words max-w-full px-2">
                   {currentQuestion.hanzi}
                 </h2>
                 <AudioButton text={currentQuestion.pinyin} />
               </div>
-              {showPinyin && quizMode === "meaning" && (
-                <p className="text-xl md:text-2xl text-muted-foreground">{currentQuestion.pinyin}</p>
+              {showPinyin && (
+                <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground break-words px-2">
+                  {currentQuestion.pinyin}
+                </p>
               )}
-              <p className="text-lg text-muted-foreground pt-4">
+              <p className="text-base sm:text-lg text-muted-foreground pt-4 px-2">
                 {quizMode === "meaning" ? "Pilih arti yang benar:" : "Pilih hanzi yang benar:"}
               </p>
             </div>
@@ -307,13 +309,13 @@ const Quiz = () => {
                     onClick={() => handleAnswerSelect(option)}
                     disabled={isAnswerLocked}
                     variant={buttonVariant}
-                    className={`h-auto py-4 text-lg justify-start text-left ${buttonClass}`}
+                    className={`h-auto py-3 sm:py-4 text-base sm:text-lg justify-start text-left ${buttonClass}`}
                   >
-                    <span className="flex items-center gap-3 w-full">
-                      <span className="font-bold">{String.fromCharCode(65 + index)}.</span>
-                      <span className="flex-1">{option}</span>
-                      {showResult && isCorrect && <CheckCircle className="h-5 w-5" />}
-                      {showResult && isSelected && !isCorrect && <XCircle className="h-5 w-5" />}
+                    <span className="flex items-center gap-2 sm:gap-3 w-full">
+                      <span className="font-bold text-sm sm:text-base">{String.fromCharCode(65 + index)}.</span>
+                      <span className="flex-1 break-words">{option}</span>
+                      {showResult && isCorrect && <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />}
+                      {showResult && isSelected && !isCorrect && <XCircle className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />}
                     </span>
                   </Button>
                 );

@@ -80,14 +80,14 @@ const Statistics = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center pt-20">
         <p className="text-muted-foreground">Memuat statistik...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8 pt-20">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
           <Button onClick={() => navigate("/")} variant="ghost" size="sm">
