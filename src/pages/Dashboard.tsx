@@ -4,10 +4,8 @@ import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { ProgressBar } from "@/components/ProgressBar";
 import { NotificationSettings } from "@/components/NotificationSettings";
-import { BookOpen, BookMarked, Brain, Trophy, Plus, BarChart3, Award, Pencil, FileDown, LogOut, Users, CheckCircle, Type, Volume2, VolumeX } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { BookOpen, BookMarked, Brain, Trophy, BarChart3, Award, Pencil, CheckCircle, Type, FileDown, Volume2, VolumeX } from "lucide-react";
 import { useVocabulary } from "@/hooks/useVocabulary";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -15,8 +13,6 @@ import { toast } from "sonner";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { vocabulary, loading } = useVocabulary();
-  const [streak, setStreak] = useState(0);
-  const [points, setPoints] = useState(0);
   const [audioEnabled, setAudioEnabled] = useState(() => {
     const saved = localStorage.getItem("audioEnabled");
     return saved !== null ? saved === "true" : true;
@@ -26,43 +22,6 @@ const Dashboard = () => {
     setAudioEnabled(enabled);
     localStorage.setItem("audioEnabled", enabled.toString());
     toast.success(enabled ? "Audio diaktifkan" : "Audio dinonaktifkan");
-  };
-
-  useEffect(() => {
-    fetchStreak();
-    fetchPoints();
-  }, []);
-
-  const fetchStreak = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("user_streaks")
-      .select("current_streak")
-      .eq("user_id", user.id)
-      .single();
-
-    if (data) setStreak(data.current_streak);
-  };
-
-  const fetchPoints = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("user_points")
-      .select("total_points")
-      .eq("user_id", user.id)
-      .single();
-
-    if (data) setPoints(data.total_points);
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Berhasil logout!");
-    navigate("/auth");
   };
 
   if (loading) {
@@ -89,36 +48,7 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background pt-16">
-      <header className="border-b bg-card shadow-soft">
-        <div className="container mx-auto px-4 py-4 md:py-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Mandarin Tracker</h1>
-              <div className="flex gap-4 flex-wrap">
-                <p className="text-sm md:text-base text-muted-foreground">🔥 Streak: {streak} hari</p>
-                <p className="text-sm md:text-base text-muted-foreground">⭐ Poin: {points}</p>
-              </div>
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto flex-wrap">
-              <ThemeToggle />
-              <Button onClick={() => navigate("/leaderboard")} variant="outline" size="sm">
-                <Users className="mr-2 h-4 w-4" />
-                Leaderboard
-              </Button>
-              <Button onClick={() => navigate("/vocabulary")} size="sm" className="shadow-medium flex-1 sm:flex-initial">
-                <Plus className="mr-1 md:mr-2 h-4 md:h-5 w-4 md:w-5" />
-                <span className="text-xs md:text-sm">Tambah</span>
-              </Button>
-              <Button onClick={handleLogout} variant="outline" size="sm" className="flex-1 sm:flex-initial">
-                <LogOut className="mr-1 md:mr-2 h-4 md:h-5 w-4 md:w-5" />
-                <span className="text-xs md:text-sm">Logout</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-background pt-6 md:pt-8">
       <main className="container mx-auto px-4 py-6 md:py-8 space-y-6 md:space-y-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
           <div onClick={() => navigate("/vocabulary")} className="cursor-pointer">
